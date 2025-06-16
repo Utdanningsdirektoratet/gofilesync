@@ -1,0 +1,9 @@
+configDir: /custom/state
+debounceInMs: 500
+directories:
+  - title: Config File
+    source: /app/config.php
+    destination: /var/www/config.php
+  - title: Auth Module
+    source: /app/auth
+    destination: /var/www/auth
