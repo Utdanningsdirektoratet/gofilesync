@@ -156,6 +156,14 @@ go test -cover ./...
 go test -v ./internal/sync/...
 ```
 
+## Releasing
+- GitHub token with repo scope: `export GITHUB_TOKEN=$(gh auth token)`
+- Commit `git commit -m "Release 1.0.0" && git push origin main`
+- Tag `git tag -a 1.0.0 -m "Release 1.0.0" && git push origin main 1.0.0`
+- Release `goreleaser release --clean`
+- Approve draft under GitHub releases 
+
+
 ## License
 
 MIT License - see [LICENSE](LICENSE) file for details
