@@ -41,7 +41,7 @@ func NewManager(cfg *config.Config, log *logger.Logger, dryRun bool) (*Manager, 
 }
 
 func (m *Manager) Run() error {
-	for _, dir := range m.config.Directories {
+	for _, dir := range m.config.Sync {
 		m.logger.Debug(fmt.Sprintf("Processing %s", dir.Title))
 		if err := m.syncPath(dir.Source, dir.Destination); err != nil {
 			m.logger.Error(fmt.Sprintf("Failed to sync %s: %v", dir.Title, err))

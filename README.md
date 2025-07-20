@@ -18,7 +18,7 @@ A lightweight, cross-platform file synchronization tool with backup management, 
 ## How It Works
 
 1. **Sync Mode**: Compares source and destination files, creates backups of existing files, then copies changed files
-2. **Watch Mode**: Monitors source directories for changes, debounces events, then runs sync
+2. **Watch Mode**: Monitors source directories and files for changes, debounces events, then runs sync
 3. **Backup System**: Creates unique backup paths using source file path hashing
 4. **Symlinks**: Automatically resolves and follows symlinks, copying actual file content
 
@@ -58,6 +58,9 @@ gofilesync config.yaml sync
 # Watch mode
 gofilesync config.yaml watch
 
+# Watch mode with polling every 300ms (for Docker volumes)
+gofilesync config.yaml watch --poll 300
+
 # Dry run
 gofilesync config.yaml sync --dry-run
 
@@ -75,7 +78,7 @@ Create a YAML file:
 ```yaml
 configDir: /var/www/.gofilesync
 debounceInMs: 200
-directories:
+sync:
   - title: Config
     source: /app/source/config.php
     destination: /var/www/html/config.php
@@ -91,7 +94,7 @@ directories:
 
 - `configDir`: Where to store state files (defaults to `{current_directory}/.gofilesync`)
 - `debounceInMs`: Milliseconds to wait before syncing after file changes
-- `directories`: Array of sync pairs (required)
+- `sync`: Array of sync pairs (required)
   - `title`: Descriptive name for logging
   - `source`: Absolute path to source file/directory
   - `destination`: Absolute path to destination

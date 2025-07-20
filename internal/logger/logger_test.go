@@ -55,6 +55,7 @@ func TestLogLevels(t *testing.T) {
 
 	log.Info("Info message")
 	log.Debug("Debug message")
+	log.Warn("Warn message")
 	log.Error("Error message")
 
 	content, err := os.ReadFile(logPath)
@@ -63,8 +64,8 @@ func TestLogLevels(t *testing.T) {
 	}
 
 	lines := strings.Split(strings.TrimSpace(string(content)), "\n")
-	if len(lines) != 2 {
-		t.Fatalf("Expected 2 log lines (debug filtered), got %d", len(lines))
+	if len(lines) != 3 {
+		t.Fatalf("Expected 3 log lines (debug filtered), got %d", len(lines))
 	}
 
 	tests := []struct {
@@ -73,7 +74,8 @@ func TestLogLevels(t *testing.T) {
 		msg   string
 	}{
 		{0, "INFO", "Info message"},
-		{1, "ERROR", "Error message"},
+		{1, "WARN", "Warn message"},
+		{2, "ERROR", "Error message"},
 	}
 
 	for _, test := range tests {
@@ -171,5 +173,41 @@ func TestDebugMode(t *testing.T) {
 	content2, _ := os.ReadFile(logPath)
 	if !strings.Contains(string(content2), "Debug enabled") {
 		t.Error("Debug message should be logged when debug mode is on")
+	}
+}
+
+func TestAllLogLevels(t *testing.T) {
+	tmpDir := t.TempDir()
+	logPath := filepath.Join(tmpDir, "test.log")
+
+	log, err := New(logPath, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer log.Close()
+
+	// Enable debug mode to see all levels
+	log.SetDebugMode(true)
+
+	log.Debug("Debug test")
+	log.Info("Info test")
+	log.Warn("Warn test")
+	log.Error("Error test")
+
+	content, err := os.ReadFile(logPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	lines := strings.Split(strings.TrimSpace(string(content)), "\n")
+	if len(lines) != 4 {
+		t.Fatalf("Expected 4 log lines, got %d", len(lines))
+	}
+
+	// Verify level formatting is consistent
+	for i, line := range lines {
+		if !strings.Contains(line, "level=") {
+			t.Errorf("Line %d missing 'level=' prefix", i)
+		}
 	}
 }

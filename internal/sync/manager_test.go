@@ -13,7 +13,7 @@ func TestManagerCreation(t *testing.T) {
 	tmpDir := t.TempDir()
 	cfg := &config.Config{
 		ConfigDir: tmpDir,
-		Directories: []config.Directory{
+		Sync: []config.Directory{
 			{
 				Title:       "Test",
 				Source:      filepath.Join(tmpDir, "src"),
@@ -58,7 +58,7 @@ func TestSyncFile(t *testing.T) {
 
 	cfg := &config.Config{
 		ConfigDir: tmpDir,
-		Directories: []config.Directory{
+		Sync: []config.Directory{
 			{Title: "Test File", Source: srcFile, Destination: destFile},
 		},
 	}
@@ -93,7 +93,7 @@ func TestSyncDirectory(t *testing.T) {
 
 	cfg := &config.Config{
 		ConfigDir: tmpDir,
-		Directories: []config.Directory{
+		Sync: []config.Directory{
 			{Title: "Test Dir", Source: srcDir, Destination: destDir},
 		},
 	}
@@ -139,7 +139,7 @@ func TestSyncSymlink(t *testing.T) {
 
 	cfg := &config.Config{
 		ConfigDir: tmpDir,
-		Directories: []config.Directory{
+		Sync: []config.Directory{
 			{Title: "Symlink", Source: linkFile, Destination: destFile},
 		},
 	}
@@ -178,7 +178,7 @@ func TestSyncWithBackup(t *testing.T) {
 
 	cfg := &config.Config{
 		ConfigDir: tmpDir,
-		Directories: []config.Directory{
+		Sync: []config.Directory{
 			{Title: "Update", Source: srcFile, Destination: destFile},
 		},
 	}
@@ -223,7 +223,7 @@ func TestSyncUnchangedFile(t *testing.T) {
 
 	cfg := &config.Config{
 		ConfigDir: tmpDir,
-		Directories: []config.Directory{
+		Sync: []config.Directory{
 			{Title: "Unchanged", Source: srcFile, Destination: destFile},
 		},
 	}
@@ -248,7 +248,7 @@ func TestSyncMissingSourceWithExistingDest(t *testing.T) {
 	tmpDir := t.TempDir()
 	cfg := &config.Config{
 		ConfigDir: tmpDir,
-		Directories: []config.Directory{
+		Sync: []config.Directory{
 			{
 				Title:       "Missing Source",
 				Source:      filepath.Join(tmpDir, "nonexistent", "file.txt"),
@@ -305,7 +305,7 @@ func TestMultipleDirectories(t *testing.T) {
 
 	cfg := &config.Config{
 		ConfigDir: tmpDir,
-		Directories: []config.Directory{
+		Sync: []config.Directory{
 			{Title: "First", Source: src1, Destination: dest1},
 			{Title: "Second", Source: src2, Destination: dest2},
 		},
@@ -345,7 +345,7 @@ func TestFileRemovedFromConfig(t *testing.T) {
 
 	cfg := &config.Config{
 		ConfigDir: tmpDir,
-		Directories: []config.Directory{
+		Sync: []config.Directory{
 			{Title: "Test File", Source: srcFile, Destination: destFile},
 		},
 	}
@@ -365,8 +365,8 @@ func TestFileRemovedFromConfig(t *testing.T) {
 
 	// Remove file from config
 	cfg2 := &config.Config{
-		ConfigDir:   tmpDir,
-		Directories: []config.Directory{}, // Empty - file removed from config
+		ConfigDir: tmpDir,
+		Sync:      []config.Directory{}, // Empty - file removed from config
 	}
 
 	// Run sync with new config
@@ -397,7 +397,7 @@ func TestSyncDirectoryWithSymlinks(t *testing.T) {
 
 	cfg := &config.Config{
 		ConfigDir: tmpDir,
-		Directories: []config.Directory{
+		Sync: []config.Directory{
 			{Title: "Mixed Dir", Source: srcDir, Destination: destDir},
 		},
 	}

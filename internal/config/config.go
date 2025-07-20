@@ -11,7 +11,7 @@ import (
 type Config struct {
 	ConfigDir    string      `yaml:"configDir,omitempty"`
 	DebounceInMs int         `yaml:"debounceInMs,omitempty"`
-	Directories  []Directory `yaml:"directories"`
+	Sync         []Directory `yaml:"sync"`
 }
 
 type Directory struct {
@@ -31,8 +31,8 @@ func Load(path string) (*Config, error) {
 		return nil, err
 	}
 
-	if len(config.Directories) == 0 {
-		return nil, fmt.Errorf("no directories defined in configuration")
+	if len(config.Sync) == 0 {
+		return nil, fmt.Errorf("no sync entries defined in configuration")
 	}
 
 	if config.ConfigDir == "" {

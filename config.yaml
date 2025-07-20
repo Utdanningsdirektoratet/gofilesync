@@ -1,6 +1,6 @@
 configDir: /custom/state
 debounceInMs: 500
-directories:
+sync:
   - title: Config File
     source: /app/config.php
     destination: /var/www/config.php

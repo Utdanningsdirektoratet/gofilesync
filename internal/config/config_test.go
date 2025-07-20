@@ -13,7 +13,7 @@ func TestLoadConfig(t *testing.T) {
 	configContent := `
 configDir: /custom/state
 debounceInMs: 500
-directories:
+sync:
   - title: Config File
     source: /app/config.php
     destination: /var/www/config.php
@@ -39,16 +39,16 @@ directories:
 		t.Errorf("Expected debounceInMs 500, got %d", cfg.DebounceInMs)
 	}
 
-	if len(cfg.Directories) != 2 {
-		t.Fatalf("Expected 2 directories, got %d", len(cfg.Directories))
+	if len(cfg.Sync) != 2 {
+		t.Fatalf("Expected 2 sync entries, got %d", len(cfg.Sync))
 	}
 
-	if cfg.Directories[0].Title != "Config File" {
-		t.Errorf("Expected title 'Config File', got %s", cfg.Directories[0].Title)
+	if cfg.Sync[0].Title != "Config File" {
+		t.Errorf("Expected title 'Config File', got %s", cfg.Sync[0].Title)
 	}
 
-	if cfg.Directories[1].Source != "/app/auth" {
-		t.Errorf("Expected source /app/auth, got %s", cfg.Directories[1].Source)
+	if cfg.Sync[1].Source != "/app/auth" {
+		t.Errorf("Expected source /app/auth, got %s", cfg.Sync[1].Source)
 	}
 }
 
@@ -65,7 +65,7 @@ func TestConfigDefaults(t *testing.T) {
 	destPath := filepath.Join(tmpDir, "dest")
 
 	configContent := `
-directories:
+sync:
   - title: Test
     source: ` + srcPath + `
     destination: ` + destPath + `
@@ -90,7 +90,7 @@ directories:
 	}
 }
 
-func TestNoDirectoriesError(t *testing.T) {
+func TestNoSyncEntriesError(t *testing.T) {
 	tmpDir := t.TempDir()
 	configPath := filepath.Join(tmpDir, "config.yaml")
 
@@ -105,20 +105,20 @@ debounceInMs: 100
 
 	_, err := Load(configPath)
 	if err == nil {
-		t.Error("Expected error for missing directories")
+		t.Error("Expected error for missing sync entries")
 	}
 
-	if err.Error() != "no directories defined in configuration" {
+	if err.Error() != "no sync entries defined in configuration" {
 		t.Errorf("Wrong error message: %v", err)
 	}
 }
 
-func TestEmptyDirectoriesError(t *testing.T) {
+func TestEmptySyncEntriesError(t *testing.T) {
 	tmpDir := t.TempDir()
 	configPath := filepath.Join(tmpDir, "config.yaml")
 
 	configContent := `
-directories: []
+sync: []
 `
 
 	if err := os.WriteFile(configPath, []byte(configContent), 0644); err != nil {
@@ -127,7 +127,7 @@ directories: []
 
 	_, err := Load(configPath)
 	if err == nil {
-		t.Error("Expected error for empty directories")
+		t.Error("Expected error for empty sync entries")
 	}
 }
 
@@ -136,7 +136,7 @@ func TestInvalidYAML(t *testing.T) {
 	configPath := filepath.Join(tmpDir, "config.yaml")
 
 	configContent := `
-directories:
+sync:
   - title: Test
     source: /src
   destination: /dest
@@ -184,7 +184,7 @@ func TestConfigWithAbsolutePaths(t *testing.T) {
 	destDir := filepath.Join(tmpDir, "destination", "www")
 
 	configContent := `
-directories:
+sync:
   - title: App Files
     source: ` + srcDir + `
     destination: ` + destDir + `
@@ -199,11 +199,11 @@ directories:
 		t.Fatal(err)
 	}
 
-	if cfg.Directories[0].Source != srcDir {
-		t.Errorf("Expected source %s, got %s", srcDir, cfg.Directories[0].Source)
+	if cfg.Sync[0].Source != srcDir {
+		t.Errorf("Expected source %s, got %s", srcDir, cfg.Sync[0].Source)
 	}
 
-	if cfg.Directories[0].Destination != destDir {
-		t.Errorf("Expected destination %s, got %s", destDir, cfg.Directories[0].Destination)
+	if cfg.Sync[0].Destination != destDir {
+		t.Errorf("Expected destination %s, got %s", destDir, cfg.Sync[0].Destination)
 	}
 }

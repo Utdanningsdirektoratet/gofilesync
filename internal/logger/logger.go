@@ -18,6 +18,7 @@ type Logger struct {
 const (
 	LevelDEBUG = "DEBUG"
 	LevelINFO  = "INFO"
+	LevelWARN  = "WARN"
 	LevelERROR = "ERROR"
 )
 
@@ -68,6 +69,10 @@ func (l *Logger) Debug(message string) {
 
 func (l *Logger) Info(message string) {
 	l.log(LevelINFO, message)
+}
+
+func (l *Logger) Warn(message string) {
+	l.log(LevelWARN, message)
 }
 
 func (l *Logger) Error(message string) {
