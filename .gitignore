@@ -1,0 +1,22 @@
+# Compiled binaries / build output
+/bin/
+/gofilesync
+*.exe
+*.test
+*.out
+
+# Go build & coverage artifacts
+coverage.txt
+coverage.html
+*.prof
+
+# goreleaser output
+/dist/
+
+# gofilesync runtime state produced by the tool / tests
+.gofilesync/
+*.log
+
+# Editor/OS noise
+.DS_Store
+*.swp

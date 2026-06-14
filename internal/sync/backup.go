@@ -44,7 +44,6 @@ func (b *BackupManager) Backup(filePath string) error {
 	}
 
 	if b.fileOps.dryRun {
-		b.logger.Info("Backup original " + filePath + " -> " + backupPath)
 		return nil
 	}
 
@@ -53,34 +52,27 @@ func (b *BackupManager) Backup(filePath string) error {
 		return err
 	}
 
-	if err := b.fileOps.Copy(filePath, backupPath); err != nil {
-		return err
-	}
-
-	b.logger.Info("Backup original " + filePath + " -> " + backupPath)
-	return nil
+	return b.fileOps.Copy(filePath, backupPath)
 }
 
-func (b *BackupManager) Restore(filePath string) error {
+func (b *BackupManager) Restore(filePath string) (kind string, err error) {
 	backupPath := b.GetBackupPath(filePath)
 
-	if _, err := os.Stat(backupPath); os.IsNotExist(err) {
-		b.fileOps.Remove(filePath)
-		b.logger.Info("Deleted " + filePath + " (no backup found)")
-		return nil
+	if _, statErr := os.Stat(backupPath); os.IsNotExist(statErr) {
+		if err := b.fileOps.Remove(filePath); err != nil && !os.IsNotExist(err) {
+			return "", err
+		}
+		return "removed", nil
 	}
 
 	if b.fileOps.dryRun {
-		b.logger.Info("Restore " + backupPath + " -> " + filePath)
-		return nil
+		return "restored", nil
 	}
 
 	if err := b.fileOps.Copy(backupPath, filePath); err != nil {
-		return err
+		return "", err
 	}
-
-	b.logger.Info("Restore " + backupPath + " -> " + filePath)
-	return nil
+	return "restored", nil
 }
 
 func (b *BackupManager) Clear() error {

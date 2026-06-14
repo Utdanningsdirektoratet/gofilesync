@@ -9,11 +9,12 @@ import (
 )
 
 type FileOperations struct {
-	dryRun bool
+	dryRun        bool
+	preservePerms bool
 }
 
-func NewFileOperations(dryRun bool) *FileOperations {
-	return &FileOperations{dryRun: dryRun}
+func NewFileOperations(dryRun, preservePerms bool) *FileOperations {
+	return &FileOperations{dryRun: dryRun, preservePerms: preservePerms}
 }
 
 func (f *FileOperations) Copy(src, dst string) error {
@@ -38,8 +39,19 @@ func (f *FileOperations) Copy(src, dst string) error {
 	}
 	defer dstFile.Close()
 
-	_, err = io.Copy(dstFile, srcFile)
-	return err
+	if _, err := io.Copy(dstFile, srcFile); err != nil {
+		return err
+	}
+
+	if f.preservePerms {
+		if info, statErr := os.Stat(src); statErr == nil {
+			if err := os.Chmod(dst, info.Mode().Perm()); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
 }
 
 func (f *FileOperations) Remove(path string) error {

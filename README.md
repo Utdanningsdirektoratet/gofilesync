@@ -3,175 +3,144 @@
 [![Go Version](https://img.shields.io/badge/Go-1.21+-00ADD8?style=for-the-badge&logo=go)](https://go.dev/)
 [![License](https://img.shields.io/badge/license-MIT-blue?style=for-the-badge)](LICENSE)
 
-A lightweight, cross-platform file synchronization tool with backup management, watch mode, and dry-run capabilities. Perfect for Docker containers and development workflows.
+A lightweight, cross-platform file synchronization tool with backup management,
+watch mode, ignore patterns, and dry-run. Built for Docker containers and
+development workflows.
 
 ## Features
 
-- 🔄 Sync multiple file/directory pairs
-- 💾 Automatic backup before overwriting  
-- 👁️ Watch mode with configurable debouncing
-- 🧪 Dry run mode for testing
-- 🔗 Follows symlinks (doesn't create them)
-- 📁 Per-directory sync configuration
-- 📝 Detailed logging with debug mode
-
-## How It Works
-
-1. **Sync Mode**: Compares source and destination files, creates backups of existing files, then copies changed files
-2. **Watch Mode**: Monitors source directories and files for changes, debounces events, then runs sync
-3. **Backup System**: Creates unique backup paths using source file path hashing
-4. **Symlinks**: Automatically resolves and follows symlinks, copying actual file content
-
-## Requirements
-
-- Go 1.21+ (for building from source)
-- Works on Linux, macOS, and Windows
-- No external dependencies for running compiled binary
+- 🔄 Sync multiple file/directory pairs (one-way: source → destination)
+- 👁️ Watch mode: fsnotify or polling (reliable on Docker/macOS mounts)
+- 🧹 Ignore patterns (gitignore-style globs), global and per-entry
+- 💾 Automatic backup before overwriting; restore on source deletion
+- 🗑️ Deletion propagation for managed files (never touches unmanaged files)
+- 🧪 Dry-run mode; `--quiet` for CI/CD pipelines
+- 🔗 Resolves symlinks (copies content, doesn't create links)
+- 🔐 Opt-in permission preservation
+- 🖥️ Cross-platform: Linux, macOS, Windows
 
 ## Installation
 
-### Binary Download
-Download pre-compiled binaries from [Releases](https://github.com/ajxudir/gofilesync/releases)
-
-### From Source
 ```bash
+# From source
 go install github.com/ajxudir/gofilesync/cmd/gofilesync@latest
-```
 
-### Install Script
-```bash
-curl -sSL https://raw.githubusercontent.com/ajxudir/gofilesync/main/install.sh | sh
-```
-
-### Development
-
-```bash
+# Or build locally
 go build -o gofilesync ./cmd/gofilesync
 ```
+
+Pre-compiled binaries are on the [Releases](https://github.com/ajxudir/gofilesync/releases) page.
 
 ## Usage
 
 ```bash
-# Sync once
-gofilesync config.yaml sync
-
-# Watch mode
-gofilesync config.yaml watch
-
-# Watch mode with polling every 300ms (for Docker volumes)
-gofilesync config.yaml watch --poll 300
-
-# Dry run
-gofilesync config.yaml sync --dry-run
-
-# Debug mode (shows all log messages)
-gofilesync config.yaml sync --debug
-
-# Clear backups
-gofilesync config.yaml clear-cache
+gofilesync <config.yaml> <command> [options]
 ```
+
+Commands:
+
+```bash
+gofilesync config.yaml sync                  # one-time sync
+gofilesync config.yaml watch                 # sync once, then watch (fsnotify)
+gofilesync config.yaml watch --poll 300      # watch via polling (Docker/macOS)
+gofilesync config.yaml clear-cache           # remove stored backups
+```
+
+Options: `--dry-run`, `--debug`, `-q/--quiet`, `--poll <ms>`, `-h/--help`,
+`-v/--version`.
+
+Exit codes: `0` success · `1` runtime error (e.g. a file failed to sync) ·
+`2` usage error. Status/progress/logs go to **stderr**; stdout stays clean for
+piping.
 
 ## Configuration
 
-Create a YAML file:
-
 ```yaml
-configDir: /var/www/.gofilesync
-debounceInMs: 200
-sync:
-  - title: Config
-    source: /app/source/config.php
-    destination: /var/www/html/config.php
-  - title: Authentication Plugins
-    source: /app/source/auth
-    destination: /var/www/html/auth
-  - title: Themes
-    source: /app/source/theme
-    destination: /var/www/html/theme
+configDir: /var/www/.gofilesync   # state dir (default: ./.gofilesync)
+debounceInMs: 200                 # watch debounce (default: 300)
+preservePermissions: false        # opt-in: keep source file mode
+
+ignore:                           # gitignore-style globs, applied to every entry
+  - "**/.git/**"
+  - "node_modules"
+  - "*.log"
+
+sync:                             # required
+  - title: Config                 # name shown in output
+    source: /app/config.php       # absolute path to a file or directory
+    destination: /var/www/config.php
+  - title: Auth
+    source: /app/auth
+    destination: /var/www/auth
+    ignore:                       # optional per-entry globs (merged with global)
+      - "tests/**"
 ```
 
-### Configuration Details
+Ignore glob syntax: `*` (within a segment), `?` (one char), `**` (any number of
+directories), a pattern without `/` matches by basename at any depth (e.g.
+`node_modules`), and a leading `!` re-includes a previously excluded path.
 
-- `configDir`: Where to store state files (defaults to `{current_directory}/.gofilesync`)
-- `debounceInMs`: Milliseconds to wait before syncing after file changes
-- `sync`: Array of sync pairs (required)
-  - `title`: Descriptive name for logging
-  - `source`: Absolute path to source file/directory
-  - `destination`: Absolute path to destination
+## Output
 
-## State Management
-
-GoFileSync stores state in `configDir`:
-- `.backups/` - File backups before overwriting
-- `sync.log` - Operation logs
-
-Backup paths are unique per source file to prevent conflicts.
-
-## Log Format
+The initial sync and watch mode share a consistent, bounded layout (colored on a
+terminal, plain in pipes/CI/log files):
 
 ```
-[2025-06-16 11:02:48]  level=INFO   Processing Config
-[2025-06-16 11:02:48]  level=INFO   Backup original /var/www/config.php -> /var/www/.gofilesync/.backups/...
-[2025-06-16 11:02:48]  level=INFO   Sync /app/config.php -> /var/www/config.php
-[2025-06-16 11:02:48]  level=DEBUG  Unchanged /var/www/config.php -> /var/www/config.php
+──────────────────────────────────────────────────
+gofilesync · Initial sync
+2,641 files · 9 entries · ignoring 3 patterns
+──────────────────────────────────────────────────
+
+  [2026-06-14 06:43:38]  INFO
+    ▸ Config  (1 file)
+    ▸ Local plugins  (264 files)
+
+  [100%] Initialization complete — 2,641 synced
 ```
 
-## Project Structure
+In watch mode each change batch is one concise line per entry (a single file
+shows its path, many collapse to a count, so a folder delete never floods):
 
 ```
-gofilesync/
-├── cmd/
-│   └── gofilesync/
-│       └── main.go
-├── internal/
-│   ├── config/
-│   │   ├── config.go
-│   │   └── config_test.go       
-│   ├── sync/
-│   │   ├── manager.go
-│   │   ├── manager_test.go      
-│   │   ├── file.go
-│   │   ├── file_test.go         
-│   │   ├── backup.go
-│   │   └── backup_test.go       
-│   ├── watcher/
-│   │   ├── watcher.go
-│   │   └── watcher_test.go      
-│   └── logger/
-│       ├── logger.go
-│       └── logger_test.go       
-├── go.mod                       
-├── Dockerfile                   
-├── config.yaml
-└── README.md                    
+  [2026-06-14 06:46:26]  INFO
+    ▸ Auth plugins  (changed plugin5/lib.php)
+    ▸ Filter plugins  (308 removed)
 ```
 
-## Testing
+## State management
+
+GoFileSync stores state under `configDir`:
+
+- `.backups/` — backups taken before overwriting an existing destination
+- `managed.json` — files the tool has written (basis for safe deletion handling)
+- `sync.log` — operation log
+
+## Building & testing
 
 ```bash
-# Run all tests
-go test ./...
-
-# Run with coverage
-go test -cover ./...
-
-# Run specific package
-go test -v ./internal/sync/...
+make build          # build ./bin/gofilesync
+make test           # end-to-end test suite
+make test-features  # per-feature tests
+make test-projects  # project-setup tests
 ```
 
-## Releasing
-- GitHub token with repo scope: `export GITHUB_TOKEN=$(gh auth token)`
-- Commit `git commit -m "Release 1.0.0" && git push origin main`
-- Tag `git tag -a 1.0.0 -m "Release 1.0.0" && git push origin main 1.0.0`
-- Release `goreleaser release --clean`
-- Approve draft under GitHub releases 
+Tests are end-to-end: they compile the real binary and drive it as a subprocess
+against real configs and files (`test/features/` per-feature, `test/` project
+setups).
 
+## Releasing
+
+```bash
+export GITHUB_TOKEN=$(gh auth token)
+git tag -a 1.2.0 -m "Release 1.2.0" && git push origin main 1.2.0
+goreleaser release --clean
+```
 
 ## License
 
-MIT License - see [LICENSE](LICENSE) file for details
+MIT License — see [LICENSE](LICENSE).
 
 ## Acknowledgments
 
-- Built with [fsnotify](https://github.com/fsnotify/fsnotify) for file watching
+- File watching by [fsnotify](https://github.com/fsnotify/fsnotify)
 - YAML parsing by [yaml.v3](https://gopkg.in/yaml.v3)

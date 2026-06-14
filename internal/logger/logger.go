@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"sync"
 	"time"
+
+	"github.com/ajxudir/gofilesync/internal/progress"
 )
 
 type Logger struct {
@@ -13,6 +15,7 @@ type Logger struct {
 	mu        sync.Mutex
 	dryRun    bool
 	debugMode bool
+	color     bool
 }
 
 const (
@@ -23,8 +26,9 @@ const (
 )
 
 func New(logPath string, dryRun bool) (*Logger, error) {
+	color := progress.ColorEnabled(os.Stderr)
 	if dryRun {
-		return &Logger{dryRun: true}, nil
+		return &Logger{dryRun: true, color: color}, nil
 	}
 
 	dir := filepath.Dir(logPath)
@@ -37,7 +41,20 @@ func New(logPath string, dryRun bool) (*Logger, error) {
 		return nil, err
 	}
 
-	return &Logger{file: file, dryRun: dryRun}, nil
+	return &Logger{file: file, dryRun: dryRun, color: color}, nil
+}
+
+func levelColor(level string) string {
+	switch level {
+	case LevelERROR:
+		return "31"
+	case LevelWARN:
+		return "33"
+	case LevelDEBUG:
+		return "2"
+	default:
+		return "36"
+	}
 }
 
 func (l *Logger) SetDebugMode(debug bool) {
@@ -53,13 +70,18 @@ func (l *Logger) log(level, message string) {
 	defer l.mu.Unlock()
 
 	timestamp := time.Now().Format("2006-01-02 15:04:05")
-	levelPadded := fmt.Sprintf("%-5s", level)
-	logLine := fmt.Sprintf("[%s]  level=%s  %s", timestamp, levelPadded, message)
 
-	fmt.Println(logLine)
+	plain := fmt.Sprintf("[%s]  %-5s  %s", timestamp, level, message)
+
+	console := plain
+	if l.color {
+		console = fmt.Sprintf("\x1b[2m[%s]\x1b[0m  \x1b[%sm%-5s\x1b[0m  %s",
+			timestamp, levelColor(level), level, message)
+	}
+	fmt.Fprintln(os.Stderr, console)
 
 	if !l.dryRun && l.file != nil {
-		l.file.WriteString(logLine + "\n")
+		l.file.WriteString(plain + "\n")
 	}
 }
 
@@ -77,6 +99,24 @@ func (l *Logger) Warn(message string) {
 
 func (l *Logger) Error(message string) {
 	l.log(LevelERROR, message)
+}
+
+func (l *Logger) Line(console, file string) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	fmt.Fprintln(os.Stderr, console)
+	if !l.dryRun && l.file != nil {
+		l.file.WriteString(file + "\n")
+	}
+}
+
+func (l *Logger) Blank() {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	fmt.Fprintln(os.Stderr)
+	if !l.dryRun && l.file != nil {
+		l.file.WriteString("\n")
+	}
 }
 
 func (l *Logger) Close() {

@@ -1,9 +1,23 @@
-configDir: /custom/state
-debounceInMs: 500
+# gofilesync example configuration
+configDir: /var/www/.gofilesync
+debounceInMs: 200
+
+# Opt-in: keep source permission bits (e.g. executable scripts). Default: false.
+preservePermissions: false
+
+# gitignore-style globs, applied to every entry.
+ignore:
+  - "**/.git/**"
+  - "node_modules"
+  - "*.log"
+
 sync:
-  - title: Config File
+  - title: Config
     source: /app/config.php
     destination: /var/www/config.php
-  - title: Auth Module
+
+  - title: Auth
     source: /app/auth
     destination: /var/www/auth
+    ignore:
+      - "tests/**"

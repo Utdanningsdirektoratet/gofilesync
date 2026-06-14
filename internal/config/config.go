@@ -9,36 +9,52 @@ import (
 )
 
 type Config struct {
-	ConfigDir    string      `yaml:"configDir,omitempty"`
-	DebounceInMs int         `yaml:"debounceInMs,omitempty"`
-	Sync         []Directory `yaml:"sync"`
+	ConfigDir           string      `yaml:"configDir,omitempty"`
+	DebounceInMs        int         `yaml:"debounceInMs,omitempty"`
+	PreservePermissions bool        `yaml:"preservePermissions,omitempty"`
+	Ignore              []string    `yaml:"ignore,omitempty"`
+	Sync                []Directory `yaml:"sync"`
 }
 
 type Directory struct {
-	Title       string `yaml:"title"`
-	Source      string `yaml:"source"`
-	Destination string `yaml:"destination"`
+	Title       string   `yaml:"title"`
+	Source      string   `yaml:"source"`
+	Destination string   `yaml:"destination"`
+	Ignore      []string `yaml:"ignore,omitempty"`
 }
 
 func Load(path string) (*Config, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return nil, err
+		if os.IsNotExist(err) {
+			return nil, fmt.Errorf("config file not found: %s", path)
+		}
+		return nil, fmt.Errorf("cannot read config %q: %w", path, err)
 	}
 
 	var config Config
 	if err := yaml.Unmarshal(data, &config); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("invalid YAML in %q: %w", path, err)
 	}
 
 	if len(config.Sync) == 0 {
-		return nil, fmt.Errorf("no sync entries defined in configuration")
+		return nil, fmt.Errorf("config has no 'sync' entries")
+	}
+
+	for i, d := range config.Sync {
+		if d.Source == "" || d.Destination == "" {
+			name := d.Title
+			if name == "" {
+				name = fmt.Sprintf("#%d", i+1)
+			}
+			return nil, fmt.Errorf("sync entry %s is missing a source or destination", name)
+		}
 	}
 
 	if config.ConfigDir == "" {
 		cwd, err := os.Getwd()
 		if err != nil {
-			return nil, fmt.Errorf("failed to get working directory: %v", err)
+			return nil, fmt.Errorf("cannot determine working directory: %w", err)
 		}
 		config.ConfigDir = filepath.Join(cwd, ".gofilesync")
 	}
@@ -60,4 +76,8 @@ func (c *Config) GetBackupDir() string {
 
 func (c *Config) GetLogFile() string {
 	return filepath.Join(c.ConfigDir, "sync.log")
+}
+
+func (c *Config) GetManifestFile() string {
+	return filepath.Join(c.ConfigDir, "managed.json")
 }
