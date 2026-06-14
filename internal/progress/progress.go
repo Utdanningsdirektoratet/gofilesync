@@ -207,12 +207,14 @@ func (r *Reporter) Summary(synced, skipped, restored, errors int) {
 		parts = append(parts, "nothing to sync")
 	}
 
-	line := "[100%] Initialization complete — " + strings.Join(parts, ", ")
+	ts := time.Now().Format("2006-01-02 15:04:05")
+	msg := "Sync complete — " + strings.Join(parts, ", ")
 	if errors > 0 {
-		fmt.Fprintln(r.out, "  "+r.Red(line))
+		msg = r.Red(msg)
 	} else {
-		fmt.Fprintln(r.out, "  "+r.Green(line))
+		msg = r.Green(msg)
 	}
+	fmt.Fprintln(r.out, "  "+r.Dim("["+ts+"]")+"  "+r.Cyan("INFO")+"   "+msg)
 }
 
 func comma(n int) string {

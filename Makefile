@@ -1,7 +1,11 @@
 .PHONY: build test test-features test-projects clean
 
+# GOEXE is ".exe" on Windows and empty elsewhere, so `make build` produces a
+# runnable binary on every platform.
+BIN := bin/gofilesync$(shell go env GOEXE)
+
 build:
-	go build -o bin/gofilesync ./cmd/gofilesync
+	go build -o $(BIN) ./cmd/gofilesync
 
 # -count=1 disables the test cache: the harness rebuilds the binary itself, so
 # caching by Go source alone could otherwise hide internal/ changes.

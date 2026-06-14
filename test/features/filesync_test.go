@@ -1,6 +1,7 @@
 package features
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/ajxudir/gofilesync/test/utils"
@@ -28,17 +29,20 @@ func TestFileSyncUpdatesOnChange(t *testing.T) {
 	e.AssertContent("dest/config.php", "v2")
 }
 
-func TestFileSyncIdenticalIsNoOp(t *testing.T) {
+func TestFileSyncReSyncIsNoOp(t *testing.T) {
 	e := utils.NewEnv(t)
 	e.WriteConfig(300, [][3]string{{"Config", "src/config.php", "dest/config.php"}})
 	e.Write("src/config.php", "same")
-	e.Write("dest/config.php", "same")
 
 	e.Run("sync")
 
+	out := e.Run("sync")
 	e.AssertContent("dest/config.php", "same")
+	if !strings.Contains(out, "1 unchanged") {
+		t.Fatalf("re-sync of an unchanged file should report unchanged, got:\n%s", out)
+	}
 	if e.BackupContains("same") {
-		t.Fatalf("identical sync should not produce a backup")
+		t.Fatalf("re-sync should not produce a backup")
 	}
 }
 

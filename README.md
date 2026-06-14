@@ -1,6 +1,6 @@
 # GoFileSync
 
-[![Go Version](https://img.shields.io/badge/Go-1.21+-00ADD8?style=for-the-badge&logo=go)](https://go.dev/)
+[![Go Version](https://img.shields.io/badge/Go-1.23+-00ADD8?style=for-the-badge&logo=go)](https://go.dev/)
 [![License](https://img.shields.io/badge/license-MIT-blue?style=for-the-badge)](LICENSE)
 
 A lightweight, cross-platform file synchronization tool with backup management,
@@ -14,6 +14,9 @@ development workflows.
 - 🧹 Ignore patterns (gitignore-style globs), global and per-entry
 - 🥇 Priority overrides: later entries win for a shared destination, with no churn
 - ⏱️ `once` entries: synced at startup only, ignored while watching
+- ⚡ Fast: concurrent copies + size/mtime change detection (no content reads when
+  unchanged); `checksum` opt-in for content-based comparison
+- ♻️ Auto-excludes its own state dir, so it never syncs/watches its backups & log
 - 💾 Automatic backup before overwriting; restore on source deletion
 - 🗑️ Deletion propagation for managed files (never touches unmanaged files)
 - 🧪 Dry-run mode; `--quiet` for CI/CD pipelines
@@ -61,6 +64,8 @@ piping.
 configDir: /var/www/.gofilesync   # state dir (default: ./.gofilesync)
 debounceInMs: 200                 # watch debounce (default: 300)
 preservePermissions: false        # opt-in: keep source file mode
+workers: 8                        # concurrent copies (default: 8)
+checksum: false                   # true = SHA-256 compare; false = size+mtime
 
 ignore:                           # gitignore-style globs, applied to every entry
   - "**/.git/**"
@@ -128,8 +133,10 @@ gofilesync · Initial sync
     ▸ Config  (1 file)
     ▸ Local plugins  (264 files)
 
-  [100%] Initialization complete — 2,641 synced
+  [2026-06-14 06:43:51]  INFO   Sync complete — 2,641 synced
 ```
+
+(The start and completion timestamps make the elapsed sync time visible.)
 
 In watch mode each change batch is one concise line per entry (a single file
 shows its path, many collapse to a count, so a folder delete never floods):

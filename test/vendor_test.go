@@ -36,7 +36,7 @@ func TestComposerVendorSyncWithIgnores(t *testing.T) {
 	out := e.Run("sync")
 
 	// Init progress is shown for the large sync.
-	if !strings.Contains(out, "[100%]") || !strings.Contains(out, "Initialization complete") {
+	if !strings.Contains(out, "Sync complete") {
 		t.Fatalf("expected init progress + summary, got:\n%s", out)
 	}
 

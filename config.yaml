@@ -5,6 +5,15 @@ debounceInMs: 200
 # Opt-in: keep source permission bits (e.g. executable scripts). Default: false.
 preservePermissions: false
 
+# Files are copied concurrently to hide per-file I/O latency (big win on mounted
+# volumes). Default: 8. Raise for slow network/FUSE mounts, lower for local SSDs.
+workers: 8
+
+# Change detection. Default (false): size + mtime — fast, no content reads.
+# true: compare SHA-256 content (catches edits that keep size and mtime, at the
+# cost of reading every file each sync).
+checksum: false
+
 # gitignore-style globs, applied to every entry.
 ignore:
   - "**/.git/**"

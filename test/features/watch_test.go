@@ -23,6 +23,30 @@ func TestWatchPollingSyncsOnChange(t *testing.T) {
 	e.WaitForContent("dest/local/version.php", "v2", 5*time.Second)
 }
 
+// Two sources whose paths share a prefix ("app" vs "app-config") must track
+// changes and deletions independently. A naive prefix check would let one
+// source's scan clobber the other's deletion tracking.
+func TestWatchPollingSiblingPrefixSources(t *testing.T) {
+	e := utils.NewEnv(t)
+	e.WriteConfig(50, [][3]string{
+		{"App", "src/app", "dest/app"},
+		{"AppConfig", "src/app-config", "dest/app-config"},
+	})
+	e.Write("src/app/main.php", "app1")
+	e.Write("src/app-config/conf.php", "conf1")
+
+	e.StartPoll(50)
+	e.WaitForContent("dest/app/main.php", "app1", 5*time.Second)
+	e.WaitForContent("dest/app-config/conf.php", "conf1", 5*time.Second)
+
+	e.Rm("src/app/main.php")
+	e.WaitForGone("dest/app/main.php", 5*time.Second)
+	e.AssertContent("dest/app-config/conf.php", "conf1")
+
+	e.Write("src/app-config/conf.php", "conf2")
+	e.WaitForContent("dest/app-config/conf.php", "conf2", 5*time.Second)
+}
+
 func TestWatchPollingCreatesNewFile(t *testing.T) {
 	e := utils.NewEnv(t)
 	e.WriteConfig(100, [][3]string{{"Plugins", "src/local", "dest/local"}})

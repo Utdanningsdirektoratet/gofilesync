@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"sync"
 
 	"github.com/ajxudir/gofilesync/internal/config"
 	"github.com/ajxudir/gofilesync/internal/ignore"
@@ -36,7 +37,9 @@ type Manager struct {
 	backupManager *BackupManager
 	dryRun        bool
 	manifest      *manifest
+	workers       int
 
+	mu          sync.Mutex
 	managed     map[string]bool
 	matcher     *ignore.Matcher
 	rep         *progress.Reporter
@@ -59,7 +62,7 @@ func NewManager(cfg *config.Config, log *logger.Logger, dryRun bool) (*Manager, 
 		}
 	}
 
-	fileOps := NewFileOperations(dryRun, cfg.PreservePermissions)
+	fileOps := NewFileOperations(dryRun, cfg.PreservePermissions, cfg.Checksum)
 
 	return &Manager{
 		config:        cfg,
@@ -68,6 +71,7 @@ func NewManager(cfg *config.Config, log *logger.Logger, dryRun bool) (*Manager, 
 		backupManager: NewBackupManager(cfg, fileOps, log),
 		dryRun:        dryRun,
 		manifest:      loadManifest(cfg.GetManifestFile()),
+		workers:       cfg.Workers,
 	}, nil
 }
 

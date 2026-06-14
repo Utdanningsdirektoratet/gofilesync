@@ -156,7 +156,6 @@ func main() {
 		if pollMs > 0 {
 			mode = fmt.Sprintf("polling every %dms", pollMs)
 		}
-		fmt.Fprintln(os.Stderr)
 		progress.Banner(os.Stderr, "Watching for changes", mode)
 
 		w := watcher.New(cfg, manager, logger)

@@ -46,5 +46,10 @@ func (m *manifest) save() error {
 	if err := os.MkdirAll(filepath.Dir(m.path), 0755); err != nil {
 		return err
 	}
-	return os.WriteFile(m.path, data, 0644)
+
+	tmp := m.path + ".tmp"
+	if err := os.WriteFile(tmp, data, 0644); err != nil {
+		return err
+	}
+	return os.Rename(tmp, m.path)
 }

@@ -11,10 +11,11 @@ import (
 type FileOperations struct {
 	dryRun        bool
 	preservePerms bool
+	checksum      bool
 }
 
-func NewFileOperations(dryRun, preservePerms bool) *FileOperations {
-	return &FileOperations{dryRun: dryRun, preservePerms: preservePerms}
+func NewFileOperations(dryRun, preservePerms, checksum bool) *FileOperations {
+	return &FileOperations{dryRun: dryRun, preservePerms: preservePerms, checksum: checksum}
 }
 
 func (f *FileOperations) Copy(src, dst string) error {
@@ -22,8 +23,7 @@ func (f *FileOperations) Copy(src, dst string) error {
 		return nil
 	}
 
-	dstDir := filepath.Dir(dst)
-	if err := os.MkdirAll(dstDir, 0755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(dst), 0755); err != nil {
 		return err
 	}
 
@@ -33,25 +33,31 @@ func (f *FileOperations) Copy(src, dst string) error {
 	}
 	defer srcFile.Close()
 
+	srcInfo, err := srcFile.Stat()
+	if err != nil {
+		return err
+	}
+
 	dstFile, err := os.Create(dst)
 	if err != nil {
 		return err
 	}
-	defer dstFile.Close()
-
 	if _, err := io.Copy(dstFile, srcFile); err != nil {
+		dstFile.Close()
+		return err
+	}
+	if err := dstFile.Close(); err != nil {
 		return err
 	}
 
 	if f.preservePerms {
-		if info, statErr := os.Stat(src); statErr == nil {
-			if err := os.Chmod(dst, info.Mode().Perm()); err != nil {
-				return err
-			}
+		if err := os.Chmod(dst, srcInfo.Mode().Perm()); err != nil {
+			return err
 		}
 	}
 
-	return nil
+	mt := srcInfo.ModTime()
+	return os.Chtimes(dst, mt, mt)
 }
 
 func (f *FileOperations) Remove(path string) error {
@@ -77,13 +83,8 @@ func (f *FileOperations) CalculateHash(path string) (string, error) {
 	return hex.EncodeToString(hasher.Sum(nil)), nil
 }
 
-func (f *FileOperations) AreIdentical(src, dst string) (bool, error) {
+func (f *FileOperations) AreIdentical(src, dst string, dstInfo os.FileInfo) (bool, error) {
 	srcInfo, err := os.Stat(src)
-	if err != nil {
-		return false, err
-	}
-
-	dstInfo, err := os.Stat(dst)
 	if err != nil {
 		return false, err
 	}
@@ -92,16 +93,18 @@ func (f *FileOperations) AreIdentical(src, dst string) (bool, error) {
 		return false, nil
 	}
 
+	if !f.checksum {
+		return srcInfo.ModTime().Equal(dstInfo.ModTime()), nil
+	}
+
 	srcHash, err := f.CalculateHash(src)
 	if err != nil {
 		return false, err
 	}
-
 	dstHash, err := f.CalculateHash(dst)
 	if err != nil {
 		return false, err
 	}
-
 	return srcHash == dstHash, nil
 }
 

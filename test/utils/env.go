@@ -139,6 +139,27 @@ func (e *Env) Mode(rel string) os.FileMode {
 	return info.Mode().Perm()
 }
 
+// CountFiles returns the number of regular files under a path (relative to
+// root), recursively. A missing path counts as zero.
+func (e *Env) CountFiles(rel string) int {
+	n := 0
+	filepath.WalkDir(e.Path(rel), func(_ string, d os.DirEntry, err error) error {
+		if err == nil && !d.IsDir() {
+			n++
+		}
+		return nil
+	})
+	return n
+}
+
+// Rename moves a path (both relative to root).
+func (e *Env) Rename(from, to string) {
+	e.t.Helper()
+	if err := os.Rename(e.Path(from), e.Path(to)); err != nil {
+		e.t.Fatalf("rename %s -> %s: %v", from, to, err)
+	}
+}
+
 // Symlink creates a symlink, skipping the test where unsupported.
 func (e *Env) Symlink(target, linkPath string) {
 	e.t.Helper()

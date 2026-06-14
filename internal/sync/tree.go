@@ -1,11 +1,13 @@
 package sync
 
 import (
+	"errors"
 	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"github.com/ajxudir/gofilesync/internal/config"
 	"github.com/ajxudir/gofilesync/internal/ignore"
@@ -13,6 +15,11 @@ import (
 
 func (m *Manager) matcherFor(dir config.Directory) *ignore.Matcher {
 	globs := append(append([]string{}, m.config.Ignore...), dir.Ignore...)
+
+	if rel, ok := relUnder(dir.Source, m.config.GetStateDir()); ok {
+		globs = append(globs, filepath.ToSlash(rel)+"/**")
+	}
+
 	return ignore.New(globs)
 }
 
@@ -20,8 +27,6 @@ func (m *Manager) syncPath(srcPath, destPath string) error {
 	srcInfo, err := os.Lstat(srcPath)
 	if err != nil {
 		if os.IsNotExist(err) {
-			// reconcileDeletions handles a vanished source (restore/remove);
-			// never touch unmanaged files here.
 			m.logger.Debug(fmt.Sprintf("Source not found %s", srcPath))
 			return nil
 		}
@@ -46,8 +51,11 @@ func (m *Manager) syncPath(srcPath, destPath string) error {
 	return m.syncFile(srcPath, destPath)
 }
 
+type fileJob struct{ path, rel string }
+
 func (m *Manager) syncDirectory(srcDir, destDir string) error {
-	return walkVisible(srcDir, m.matcher,
+	var jobs []fileJob
+	err := walkVisible(srcDir, m.matcher,
 		func(rel string) error {
 			if m.dryRun {
 				return nil
@@ -55,15 +63,66 @@ func (m *Manager) syncDirectory(srcDir, destDir string) error {
 			return os.MkdirAll(filepath.Join(destDir, rel), 0755)
 		},
 		func(path, rel string) error {
-			if m.rep != nil {
-				sub := filepath.Dir(rel)
-				if sub == "." {
-					sub = filepath.Base(srcDir)
-				}
-				m.rep.Item(sub)
-			}
-			return m.syncResolved(path, filepath.Join(destDir, rel))
+			jobs = append(jobs, fileJob{path, rel})
+			return nil
 		})
+	if err != nil {
+		return err
+	}
+
+	do := func(j fileJob) {
+		m.reportItem(srcDir, j.rel)
+		if e := m.syncResolved(j.path, filepath.Join(destDir, j.rel)); e != nil {
+			if errors.Is(e, fs.ErrNotExist) {
+				return
+			}
+			m.recordError(j.path, e)
+		}
+	}
+
+	if m.workers <= 1 || len(jobs) < 2 {
+		for _, j := range jobs {
+			do(j)
+		}
+		return nil
+	}
+	ch := make(chan fileJob, 256)
+	var wg sync.WaitGroup
+	for i := 0; i < m.workers; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for j := range ch {
+				do(j)
+			}
+		}()
+	}
+	for _, j := range jobs {
+		ch <- j
+	}
+	close(ch)
+	wg.Wait()
+	return nil
+}
+
+func (m *Manager) reportItem(srcDir, rel string) {
+	if m.rep == nil {
+		return
+	}
+	sub := filepath.Dir(rel)
+	if sub == "." {
+		sub = filepath.Base(srcDir)
+	}
+	m.mu.Lock()
+	m.rep.Item(sub)
+	m.mu.Unlock()
+}
+
+func (m *Manager) recordError(path string, err error) {
+	m.mu.Lock()
+	m.result.Errors++
+	m.mu.Unlock()
+	m.logger.Error(fmt.Sprintf("Could not sync %q: %v", path, err))
 }
 
 func (m *Manager) syncResolved(srcPath, destPath string) error {
@@ -84,20 +143,23 @@ func (m *Manager) syncFile(srcPath, destPath string) error {
 		}
 	}
 
+	m.mu.Lock()
 	m.managed[destPath] = true
+	m.mu.Unlock()
 
 	if destInfo, err := os.Stat(destPath); err == nil {
 		if destInfo.IsDir() {
 			return fmt.Errorf("destination %q is a directory but source is a file", destPath)
 		}
 
-		identical, err := m.fileOps.AreIdentical(srcPath, destPath)
+		identical, err := m.fileOps.AreIdentical(srcPath, destPath, destInfo)
 		if err != nil {
 			return err
 		}
 		if identical {
+			m.mu.Lock()
 			m.result.Skipped++
-			m.logger.Debug(fmt.Sprintf("Unchanged %s -> %s", srcPath, destPath))
+			m.mu.Unlock()
 			return nil
 		}
 
@@ -110,10 +172,13 @@ func (m *Manager) syncFile(srcPath, destPath string) error {
 		return err
 	}
 
-	m.result.Synced = append(m.result.Synced, Change{Title: m.curTitle, Rel: m.relTo(destPath)})
+	rel := m.relTo(destPath)
+	m.mu.Lock()
+	m.result.Synced = append(m.result.Synced, Change{Title: m.curTitle, Rel: rel})
 	if m.rep != nil {
 		m.rep.Add(1)
 	}
+	m.mu.Unlock()
 	return nil
 }
 
@@ -170,6 +235,9 @@ func (m *Manager) countEntry(dir config.Directory) int {
 func walkVisible(srcDir string, matcher *ignore.Matcher, onDir func(rel string) error, onFile func(path, rel string) error) error {
 	return filepath.WalkDir(srcDir, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
+			if errors.Is(err, fs.ErrNotExist) {
+				return nil
+			}
 			return err
 		}
 		rel, err := filepath.Rel(srcDir, path)

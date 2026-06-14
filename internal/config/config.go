@@ -12,6 +12,8 @@ type Config struct {
 	ConfigDir           string      `yaml:"configDir,omitempty"`
 	DebounceInMs        int         `yaml:"debounceInMs,omitempty"`
 	PreservePermissions bool        `yaml:"preservePermissions,omitempty"`
+	Checksum            bool        `yaml:"checksum,omitempty"`
+	Workers             int         `yaml:"workers,omitempty"`
 	Ignore              []string    `yaml:"ignore,omitempty"`
 	Sync                []Directory `yaml:"sync"`
 }
@@ -62,6 +64,10 @@ func Load(path string) (*Config, error) {
 
 	if config.DebounceInMs == 0 {
 		config.DebounceInMs = 300
+	}
+
+	if config.Workers <= 0 {
+		config.Workers = 8
 	}
 
 	return &config, nil

@@ -22,10 +22,10 @@ func TestInitProgressShowsEntryAndSummary(t *testing.T) {
 	if !strings.Contains(out, "Local plugins") || !strings.Contains(out, "(3 files)") {
 		t.Fatalf("expected a one-line entry with a file count, got:\n%s", out)
 	}
-	if !strings.Contains(out, "[100%]") || !strings.Contains(out, "Initialization complete") {
+	if !strings.Contains(out, "Sync complete") {
 		t.Fatalf("expected a completion summary, got:\n%s", out)
 	}
-	// No directory/file detail in the concise init view.
+
 	for _, noise := range []string{"greetings/", "quiz/", "boost/", "version.php"} {
 		if strings.Contains(out, noise) {
 			t.Fatalf("init should not show directory/file detail, found %q:\n%s", noise, out)

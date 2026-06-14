@@ -17,16 +17,14 @@ func TestQuietSuppressesProgressKeepsSummary(t *testing.T) {
 
 	out := e.Run("sync", "--quiet")
 
-	// Files are still synced.
 	e.AssertContent("dest/local/a/x.php", "x")
 	e.AssertContent("dest/local/b/y.php", "y")
 
-	// No progress overview noise.
 	if strings.Contains(out, "Syncing ") || strings.Contains(out, "  - ") {
 		t.Fatalf("--quiet should suppress progress overview, got:\n%s", out)
 	}
-	// But a final summary is still reported.
-	if !strings.Contains(out, "Initialization complete") {
+
+	if !strings.Contains(out, "Sync complete") {
 		t.Fatalf("--quiet should still print a summary, got:\n%s", out)
 	}
 }
