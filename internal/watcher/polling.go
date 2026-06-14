@@ -12,6 +12,9 @@ import (
 func (w *Watcher) startPolling() error {
 	lastModTimes := make(map[string]time.Time)
 	for _, dir := range w.config.Sync {
+		if dir.Once {
+			continue
+		}
 		w.scanPath(dir.Source, lastModTimes)
 	}
 
@@ -21,6 +24,9 @@ func (w *Watcher) startPolling() error {
 	for range ticker.C {
 		changed := false
 		for _, dir := range w.config.Sync {
+			if dir.Once {
+				continue
+			}
 			if w.hasChanges(dir.Source, lastModTimes) {
 				changed = true
 			}

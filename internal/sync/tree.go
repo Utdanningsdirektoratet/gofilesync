@@ -78,6 +78,12 @@ func (m *Manager) syncResolved(srcPath, destPath string) error {
 }
 
 func (m *Manager) syncFile(srcPath, destPath string) error {
+	if m.ownership != nil {
+		if owner, ok := m.ownership[destPath]; ok && owner != m.curEntry {
+			return nil
+		}
+	}
+
 	m.managed[destPath] = true
 
 	if destInfo, err := os.Stat(destPath); err == nil {
@@ -124,6 +130,18 @@ func relUnder(root, path string) (string, bool) {
 		return "", false
 	}
 	return rel, true
+}
+
+func (m *Manager) keepManaged(destRoot string) {
+	for p := range m.manifest.paths {
+		if p == destRoot {
+			m.managed[p] = true
+			continue
+		}
+		if _, ok := relUnder(destRoot, p); ok {
+			m.managed[p] = true
+		}
+	}
 }
 
 func (m *Manager) countPerEntry() []int {
@@ -177,4 +195,43 @@ func walkVisible(srcDir string, matcher *ignore.Matcher, onDir func(rel string) 
 func isDirectory(path string) bool {
 	info, err := os.Stat(path)
 	return err == nil && info.IsDir()
+}
+
+func (m *Manager) computeOwnership() map[string]int {
+	if !destsOverlap(m.config.Sync) {
+		return nil
+	}
+	own := map[string]int{}
+	for i, dir := range m.config.Sync {
+		info, err := os.Lstat(dir.Source)
+		if err != nil {
+			continue
+		}
+		if !info.IsDir() {
+			own[dir.Destination] = i
+			continue
+		}
+		_ = walkVisible(dir.Source, m.matcherFor(dir),
+			func(string) error { return nil },
+			func(_, rel string) error { own[filepath.Join(dir.Destination, rel)] = i; return nil })
+	}
+	return own
+}
+
+func destsOverlap(entries []config.Directory) bool {
+	for i := 0; i < len(entries); i++ {
+		for j := i + 1; j < len(entries); j++ {
+			a, b := entries[i].Destination, entries[j].Destination
+			if a == b {
+				return true
+			}
+			if _, ok := relUnder(a, b); ok {
+				return true
+			}
+			if _, ok := relUnder(b, a); ok {
+				return true
+			}
+		}
+	}
+	return false
 }

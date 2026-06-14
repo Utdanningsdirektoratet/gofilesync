@@ -11,13 +11,28 @@ ignore:
   - "node_modules"
   - "*.log"
 
+# Entries are processed top-to-bottom. When two entries write the same
+# destination file, the one listed LOWER wins (higher priority).
 sync:
-  - title: Config
-    source: /app/config.php
-    destination: /var/www/config.php
+  - title: Vendor plugin
+    source: /app/vendor/restful
+    destination: /var/www/html/webservice/restful
+
+  # Overrides for files in the vendor plugin above: same destination, listed
+  # later, so these win. Drop a changed file here and it overrides; remove it
+  # and the destination reverts to the vendor version.
+  - title: Project overrides
+    source: /app/src/restful
+    destination: /var/www/html/webservice/restful
 
   - title: Auth
     source: /app/auth
     destination: /var/www/auth
     ignore:
       - "tests/**"
+
+  # once: sync only on startup; never re-synced while watching.
+  - title: User data
+    source: /app/user
+    destination: /var/www/html/user
+    once: true

@@ -21,6 +21,7 @@ type Directory struct {
 	Source      string   `yaml:"source"`
 	Destination string   `yaml:"destination"`
 	Ignore      []string `yaml:"ignore,omitempty"`
+	Once        bool     `yaml:"once,omitempty"`
 }
 
 func Load(path string) (*Config, error) {

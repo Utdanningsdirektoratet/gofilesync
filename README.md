@@ -12,6 +12,8 @@ development workflows.
 - 🔄 Sync multiple file/directory pairs (one-way: source → destination)
 - 👁️ Watch mode: fsnotify or polling (reliable on Docker/macOS mounts)
 - 🧹 Ignore patterns (gitignore-style globs), global and per-entry
+- 🥇 Priority overrides: later entries win for a shared destination, with no churn
+- ⏱️ `once` entries: synced at startup only, ignored while watching
 - 💾 Automatic backup before overwriting; restore on source deletion
 - 🗑️ Deletion propagation for managed files (never touches unmanaged files)
 - 🧪 Dry-run mode; `--quiet` for CI/CD pipelines
@@ -74,11 +76,42 @@ sync:                             # required
     destination: /var/www/auth
     ignore:                       # optional per-entry globs (merged with global)
       - "tests/**"
+  - title: User data
+    source: /app/user
+    destination: /var/www/html/user
+    once: true                    # sync at startup only; ignored while watching
 ```
 
 Ignore glob syntax: `*` (within a segment), `?` (one char), `**` (any number of
 directories), a pattern without `/` matches by basename at any depth (e.g.
 `node_modules`), and a leading `!` re-includes a previously excluded path.
+
+An entry with `once: true` is synced during the initial sync (and the `sync`
+command) but is **not** watched — changes to its source while watching are
+ignored, and its destination is left in place.
+
+## Priority & overrides
+
+When two or more entries write to the **same destination**, the entry listed
+**lower in the config wins** (lower = higher priority). For each shared file
+gofilesync picks a single owner — the lowest entry that has it — so the file is
+written once (no churn), not rewritten by every entry.
+
+This makes a common layout easy: sync a whole vendor/plugin tree, then layer a
+project "overrides" directory **below** it that contains only your changed files.
+
+```yaml
+sync:
+  - title: Vendor plugin            # base
+    source: /vendor/restful
+    destination: /var/www/html/webservice/restful
+  - title: Project overrides        # lower = wins for any shared file
+    source: /src/restful
+    destination: /var/www/html/webservice/restful
+```
+
+Drop a changed file into the overrides dir and it takes over with no other
+config change; delete it and the destination reverts to the vendor version.
 
 ## Output
 

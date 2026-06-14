@@ -44,6 +44,9 @@ type Manager struct {
 	entryCounts []int
 	curTitle    string
 	curDestRoot string
+	curEntry    int
+	ownership   map[string]int
+	watchRun    bool
 }
 
 func NewManager(cfg *config.Config, log *logger.Logger, dryRun bool) (*Manager, error) {
@@ -69,6 +72,7 @@ func NewManager(cfg *config.Config, log *logger.Logger, dryRun bool) (*Manager, 
 }
 
 func (m *Manager) Init(out io.Writer, quiet bool) error {
+	m.watchRun = false
 	m.entryCounts = m.countPerEntry()
 	total, entries := 0, 0
 	for _, c := range m.entryCounts {
@@ -91,17 +95,26 @@ func (m *Manager) Init(out io.Writer, quiet bool) error {
 }
 
 func (m *Manager) Sync() (*SyncResult, error) {
+	m.watchRun = true
 	return m.run()
 }
 
 func (m *Manager) run() (*SyncResult, error) {
 	m.managed = make(map[string]bool)
 	m.result = &SyncResult{}
+	m.ownership = m.computeOwnership()
 
 	for i, dir := range m.config.Sync {
 		m.matcher = m.matcherFor(dir)
 		m.curTitle = dir.Title
 		m.curDestRoot = dir.Destination
+		m.curEntry = i
+
+		if m.watchRun && dir.Once {
+			m.keepManaged(dir.Destination)
+			continue
+		}
+
 		m.logger.Debug(fmt.Sprintf("Processing %s", dir.Title))
 
 		if m.rep != nil {

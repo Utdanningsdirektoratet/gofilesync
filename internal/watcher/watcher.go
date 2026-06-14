@@ -148,6 +148,9 @@ func (w *Watcher) startWatching() error {
 	defer watcher.Close()
 
 	for _, dir := range w.config.Sync {
+		if dir.Once {
+			continue
+		}
 		if err := w.addPath(watcher, dir.Source); err != nil {
 			w.logger.Error(fmt.Sprintf("Could not watch %q (%s): %v", dir.Title, dir.Source, err))
 		}
