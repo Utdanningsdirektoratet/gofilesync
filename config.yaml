@@ -45,3 +45,4 @@ sync:
     source: /app/user
     destination: /var/www/html/user
     once: true
+    # onSourceDelete: restore  # default; use remove to propagate source deletions

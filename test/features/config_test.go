@@ -25,3 +25,20 @@ func TestConfigRejectsMissingFile(t *testing.T) {
 		t.Fatalf("expected non-zero exit for a missing config file")
 	}
 }
+
+// Invalid onSourceDelete values are rejected at config load.
+func TestConfigRejectsInvalidOnSourceDelete(t *testing.T) {
+	e := utils.NewEnv(t)
+	e.WriteRawConfig(`configDir: ` + e.ConfigDir + `
+debounceInMs: 300
+sync:
+  - title: Config
+    source: ` + e.Path("src/config.php") + `
+    destination: ` + e.Path("dest/config.php") + `
+    onSourceDelete: purge
+`)
+
+	if _, err := e.RunExpectFail("sync"); err == nil {
+		t.Fatalf("expected non-zero exit for invalid onSourceDelete")
+	}
+}

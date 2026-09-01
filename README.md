@@ -17,7 +17,8 @@ development workflows.
 - ⚡ Fast: concurrent copies + size/mtime change detection (no content reads when
   unchanged); `checksum` opt-in for content-based comparison
 - ♻️ Auto-excludes its own state dir, so it never syncs/watches its backups & log
-- 💾 Automatic backup before overwriting; restore on source deletion
+- 💾 Automatic backup before overwriting; restore on source deletion (default)
+- 🗑️ Per-entry `onSourceDelete: remove` to drop managed files when source deletes them
 - 🗑️ Deletion propagation for managed files (never touches unmanaged files)
 - 🧪 Dry-run mode; `--quiet` for CI/CD pipelines
 - 🔗 Resolves symlinks (copies content, doesn't create links)
@@ -85,7 +86,19 @@ sync:                             # required
     source: /app/user
     destination: /var/www/html/user
     once: true                    # sync at startup only; ignored while watching
+    onSourceDelete: restore       # optional: restore (default) or remove
 ```
+
+`onSourceDelete` controls what happens when a **managed** destination file disappears
+from its source:
+
+- `restore` (default) — revert from backup if one exists, otherwise remove the
+  destination. Configs without this field behave exactly as before (non-breaking).
+- `remove` — delete the managed destination even when a backup exists. Opt-in for
+  when source deletions should propagate (e.g. repo-managed overlays).
+
+When entries share a destination, the **lower** (higher-priority) entry's
+`onSourceDelete` applies to files it owns.
 
 Ignore glob syntax: `*` (within a segment), `?` (one char), `**` (any number of
 directories), a pattern without `/` matches by basename at any depth (e.g.

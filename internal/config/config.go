@@ -19,11 +19,12 @@ type Config struct {
 }
 
 type Directory struct {
-	Title       string   `yaml:"title"`
-	Source      string   `yaml:"source"`
-	Destination string   `yaml:"destination"`
-	Ignore      []string `yaml:"ignore,omitempty"`
-	Once        bool     `yaml:"once,omitempty"`
+	Title          string   `yaml:"title"`
+	Source         string   `yaml:"source"`
+	Destination    string   `yaml:"destination"`
+	Ignore         []string `yaml:"ignore,omitempty"`
+	Once           bool     `yaml:"once,omitempty"`
+	OnSourceDelete string   `yaml:"onSourceDelete,omitempty"` // restore (default) or remove
 }
 
 func Load(path string) (*Config, error) {
@@ -51,6 +52,20 @@ func Load(path string) (*Config, error) {
 				name = fmt.Sprintf("#%d", i+1)
 			}
 			return nil, fmt.Errorf("sync entry %s is missing a source or destination", name)
+		}
+	}
+
+	for i := range config.Sync {
+		d := &config.Sync[i]
+		if d.OnSourceDelete == "" {
+			d.OnSourceDelete = "restore"
+		}
+		if d.OnSourceDelete != "restore" && d.OnSourceDelete != "remove" {
+			name := d.Title
+			if name == "" {
+				name = fmt.Sprintf("#%d", i+1)
+			}
+			return nil, fmt.Errorf("sync entry %s onSourceDelete must be restore or remove", name)
 		}
 	}
 

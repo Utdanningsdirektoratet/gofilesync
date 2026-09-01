@@ -157,6 +157,17 @@ func (m *Manager) reconcileDeletions() {
 		if m.managed[p] {
 			continue
 		}
+		entryIdx := m.locateEntry(p)
+		if entryIdx >= 0 && m.config.Sync[entryIdx].OnSourceDelete == "remove" {
+			if err := m.fileOps.Remove(p); err != nil && !os.IsNotExist(err) {
+				m.result.Errors++
+				m.logger.Error(fmt.Sprintf("Could not remove %q: %v", p, err))
+				continue
+			}
+			title, rel := m.locate(p)
+			m.result.Removed = append(m.result.Removed, Change{Title: title, Rel: rel})
+			continue
+		}
 		kind, err := m.backupManager.Restore(p)
 		if err != nil {
 			m.result.Errors++
@@ -182,6 +193,21 @@ func (m *Manager) locate(dest string) (title, rel string) {
 		}
 	}
 	return "", dest
+}
+
+// locateEntry returns the sync entry that owns dest (later entries win).
+func (m *Manager) locateEntry(dest string) int {
+	winner := -1
+	for i, d := range m.config.Sync {
+		if dest == d.Destination {
+			winner = i
+			continue
+		}
+		if _, ok := relUnder(d.Destination, dest); ok {
+			winner = i
+		}
+	}
+	return winner
 }
 
 func (m *Manager) ClearCache() error {
