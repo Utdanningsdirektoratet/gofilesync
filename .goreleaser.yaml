@@ -35,7 +35,7 @@ archives:
       - src: config.yaml
 
 checksum:
-  name_template: 'checksums.txt'
+  name_template: "checksums.txt"
 
 snapshot:
   version_template: "{{ incpatch .Version }}-next"
@@ -44,12 +44,12 @@ changelog:
   sort: asc
   filters:
     exclude:
-      - '^docs:'
-      - '^test:'
+      - "^docs:"
+      - "^test:"
 
 release:
   github:
-    owner: ajxudir
+    owner: utdanningsdirektoratet
     name: gofilesync
   draft: true
   prerelease: auto
