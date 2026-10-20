@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ajxudir/gofilesync/test/utils"
+	"github.com/utdanningsdirektoratet/gofilesync/test/utils"
 )
 
 // Chaos / battle tests: deliberately hostile scenarios meant to find weak links

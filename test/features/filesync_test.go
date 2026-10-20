@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ajxudir/gofilesync/test/utils"
+	"github.com/utdanningsdirektoratet/gofilesync/test/utils"
 )
 
 func TestFileSyncCreatesFile(t *testing.T) {

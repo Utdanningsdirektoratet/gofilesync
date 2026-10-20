@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ajxudir/gofilesync/test/utils"
+	"github.com/utdanningsdirektoratet/gofilesync/test/utils"
 )
 
 // Models syncing composer-installed plugins from a vendor tree into the Moodle

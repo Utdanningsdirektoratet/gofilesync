@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ajxudir/gofilesync/test/utils"
+	"github.com/utdanningsdirektoratet/gofilesync/test/utils"
 )
 
 // A minimal single-service container setup: one config file plus one source

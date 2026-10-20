@@ -3,7 +3,7 @@ package features
 import (
 	"testing"
 
-	"github.com/ajxudir/gofilesync/test/utils"
+	"github.com/utdanningsdirektoratet/gofilesync/test/utils"
 )
 
 // onSourceDelete: remove deletes the managed destination even when a backup exists.

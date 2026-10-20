@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ajxudir/gofilesync/test/utils"
+	"github.com/utdanningsdirektoratet/gofilesync/test/utils"
 )
 
 // Three entries targeting the same destination: the last (highest priority)

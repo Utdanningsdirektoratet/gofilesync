@@ -3,7 +3,7 @@ package features
 import (
 	"testing"
 
-	"github.com/ajxudir/gofilesync/test/utils"
+	"github.com/utdanningsdirektoratet/gofilesync/test/utils"
 )
 
 // The tool's own state dir (configDir) must never be synced, even when it lives

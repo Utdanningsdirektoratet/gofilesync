@@ -7,7 +7,7 @@ x86_64) ARCH="amd64" ;;
 aarch64 | arm64) ARCH="arm64" ;;
 esac
 
-URL="https://github.com/ajxudir/gofilesync/releases/latest/download/gofilesync_latest_${OS}_${ARCH}.tar.gz"
+URL="https://github.com/utdanningsdirektoratet/gofilesync/releases/latest/download/gofilesync_latest_${OS}_${ARCH}.tar.gz"
 echo "Download binary from $URL"
 
 if command -v curl >/dev/null 2>&1; then

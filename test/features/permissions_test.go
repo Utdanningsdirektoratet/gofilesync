@@ -4,7 +4,7 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/ajxudir/gofilesync/test/utils"
+	"github.com/utdanningsdirektoratet/gofilesync/test/utils"
 )
 
 // With preservePermissions enabled, the source file's executable bit is kept.

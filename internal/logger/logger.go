@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ajxudir/gofilesync/internal/progress"
+	"github.com/utdanningsdirektoratet/gofilesync/internal/progress"
 )
 
 type Logger struct {

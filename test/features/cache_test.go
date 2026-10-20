@@ -3,7 +3,7 @@ package features
 import (
 	"testing"
 
-	"github.com/ajxudir/gofilesync/test/utils"
+	"github.com/utdanningsdirektoratet/gofilesync/test/utils"
 )
 
 // clear-cache wipes the backup tree.

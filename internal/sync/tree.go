@@ -9,8 +9,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/ajxudir/gofilesync/internal/config"
-	"github.com/ajxudir/gofilesync/internal/ignore"
+	"github.com/utdanningsdirektoratet/gofilesync/internal/config"
+	"github.com/utdanningsdirektoratet/gofilesync/internal/ignore"
 )
 
 func (m *Manager) matcherFor(dir config.Directory) *ignore.Matcher {

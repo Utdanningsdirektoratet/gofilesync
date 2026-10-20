@@ -1,4 +1,4 @@
-module github.com/ajxudir/gofilesync
+module github.com/utdanningsdirektoratet/gofilesync
 
 go 1.23
 

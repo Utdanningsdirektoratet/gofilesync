@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ajxudir/gofilesync/test/utils"
+	"github.com/utdanningsdirektoratet/gofilesync/test/utils"
 )
 
 // A single changed file is reported with its path on one line.

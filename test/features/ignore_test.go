@@ -3,7 +3,7 @@ package features
 import (
 	"testing"
 
-	"github.com/ajxudir/gofilesync/test/utils"
+	"github.com/utdanningsdirektoratet/gofilesync/test/utils"
 )
 
 // A global ignore pattern excludes matching files anywhere in the tree.

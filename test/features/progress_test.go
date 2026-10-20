@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ajxudir/gofilesync/test/utils"
+	"github.com/utdanningsdirektoratet/gofilesync/test/utils"
 )
 
 // The initial sync prints one concise line per entry (title + file count) and a

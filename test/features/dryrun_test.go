@@ -3,7 +3,7 @@ package features
 import (
 	"testing"
 
-	"github.com/ajxudir/gofilesync/test/utils"
+	"github.com/utdanningsdirektoratet/gofilesync/test/utils"
 )
 
 // --dry-run makes no changes on disk.

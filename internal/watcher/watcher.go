@@ -7,10 +7,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ajxudir/gofilesync/internal/config"
-	"github.com/ajxudir/gofilesync/internal/logger"
-	"github.com/ajxudir/gofilesync/internal/progress"
-	syncpkg "github.com/ajxudir/gofilesync/internal/sync"
+	"github.com/utdanningsdirektoratet/gofilesync/internal/config"
+	"github.com/utdanningsdirektoratet/gofilesync/internal/logger"
+	"github.com/utdanningsdirektoratet/gofilesync/internal/progress"
+	syncpkg "github.com/utdanningsdirektoratet/gofilesync/internal/sync"
 	"github.com/fsnotify/fsnotify"
 )
 

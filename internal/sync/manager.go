@@ -7,10 +7,10 @@ import (
 	"path/filepath"
 	"sync"
 
-	"github.com/ajxudir/gofilesync/internal/config"
-	"github.com/ajxudir/gofilesync/internal/ignore"
-	"github.com/ajxudir/gofilesync/internal/logger"
-	"github.com/ajxudir/gofilesync/internal/progress"
+	"github.com/utdanningsdirektoratet/gofilesync/internal/config"
+	"github.com/utdanningsdirektoratet/gofilesync/internal/ignore"
+	"github.com/utdanningsdirektoratet/gofilesync/internal/logger"
+	"github.com/utdanningsdirektoratet/gofilesync/internal/progress"
 )
 
 type Change struct {

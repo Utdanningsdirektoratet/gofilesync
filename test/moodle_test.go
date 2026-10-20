@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ajxudir/gofilesync/test/utils"
+	"github.com/utdanningsdirektoratet/gofilesync/test/utils"
 )
 
 // moodleConfig mirrors the Moodle/docker setup: a single config file plus a set

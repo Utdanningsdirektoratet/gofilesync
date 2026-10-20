@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/ajxudir/gofilesync/internal/config"
-	"github.com/ajxudir/gofilesync/internal/logger"
+	"github.com/utdanningsdirektoratet/gofilesync/internal/config"
+	"github.com/utdanningsdirektoratet/gofilesync/internal/logger"
 )
 
 type BackupManager struct {

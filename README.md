@@ -29,13 +29,13 @@ development workflows.
 
 ```bash
 # From source
-go install github.com/ajxudir/gofilesync/cmd/gofilesync@latest
+go install github.com/utdanningsdirektoratet/gofilesync/cmd/gofilesync@latest
 
 # Or build locally
 go build -o gofilesync ./cmd/gofilesync
 ```
 
-Pre-compiled binaries are on the [Releases](https://github.com/ajxudir/gofilesync/releases) page.
+Pre-compiled binaries are on the [Releases](https://github.com/utdanningsdirektoratet/gofilesync/releases) page.
 
 ## Usage
 
@@ -62,31 +62,31 @@ piping.
 ## Configuration
 
 ```yaml
-configDir: /var/www/.gofilesync   # state dir (default: ./.gofilesync)
-debounceInMs: 200                 # watch debounce (default: 300)
-preservePermissions: false        # opt-in: keep source file mode
-workers: 8                        # concurrent copies (default: 8)
-checksum: false                   # true = SHA-256 compare; false = size+mtime
+configDir: /var/www/.gofilesync # state dir (default: ./.gofilesync)
+debounceInMs: 200 # watch debounce (default: 300)
+preservePermissions: false # opt-in: keep source file mode
+workers: 8 # concurrent copies (default: 8)
+checksum: false # true = SHA-256 compare; false = size+mtime
 
-ignore:                           # gitignore-style globs, applied to every entry
+ignore: # gitignore-style globs, applied to every entry
   - "**/.git/**"
   - "node_modules"
   - "*.log"
 
-sync:                             # required
-  - title: Config                 # name shown in output
-    source: /app/config.php       # absolute path to a file or directory
+sync: # required
+  - title: Config # name shown in output
+    source: /app/config.php # absolute path to a file or directory
     destination: /var/www/config.php
   - title: Auth
     source: /app/auth
     destination: /var/www/auth
-    ignore:                       # optional per-entry globs (merged with global)
+    ignore: # optional per-entry globs (merged with global)
       - "tests/**"
   - title: User data
     source: /app/user
     destination: /var/www/html/user
-    once: true                    # sync at startup only; ignored while watching
-    onSourceDelete: restore       # optional: restore (default) or remove
+    once: true # sync at startup only; ignored while watching
+    onSourceDelete: restore # optional: restore (default) or remove
 ```
 
 `onSourceDelete` controls what happens when a **managed** destination file disappears
@@ -120,10 +120,10 @@ project "overrides" directory **below** it that contains only your changed files
 
 ```yaml
 sync:
-  - title: Vendor plugin            # base
+  - title: Vendor plugin # base
     source: /vendor/restful
     destination: /var/www/html/webservice/restful
-  - title: Project overrides        # lower = wins for any shared file
+  - title: Project overrides # lower = wins for any shared file
     source: /src/restful
     destination: /var/www/html/webservice/restful
 ```

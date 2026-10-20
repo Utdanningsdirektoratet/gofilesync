@@ -5,11 +5,11 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/ajxudir/gofilesync/internal/config"
-	"github.com/ajxudir/gofilesync/internal/logger"
-	"github.com/ajxudir/gofilesync/internal/progress"
-	"github.com/ajxudir/gofilesync/internal/sync"
-	"github.com/ajxudir/gofilesync/internal/watcher"
+	"github.com/utdanningsdirektoratet/gofilesync/internal/config"
+	"github.com/utdanningsdirektoratet/gofilesync/internal/logger"
+	"github.com/utdanningsdirektoratet/gofilesync/internal/progress"
+	"github.com/utdanningsdirektoratet/gofilesync/internal/sync"
+	"github.com/utdanningsdirektoratet/gofilesync/internal/watcher"
 )
 
 var (
